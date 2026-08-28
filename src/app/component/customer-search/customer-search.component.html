@@ -1,0 +1,72 @@
+
+<div class="box">
+    <app-admin-menu></app-admin-menu>
+    <div class="rowClass">
+        <form [formGroup]="searchForm">
+            <div class="rowClass">
+                <label class="labelClass">Home Type:</label>
+                <select id="homeType" formControlName="homeType">
+                    <option [ngValue]=""></option>
+                    @for (opHomeType of hometypes; track opHomeType) {
+                    <option [ngValue]="opHomeType">
+                        {{ opHomeType }}
+                    </option>
+                    }
+                </select>
+            </div>
+            <div class="rowClass">
+                <label class="labelClass" for="price">Price:</label>
+                <input id="price" type="text" formControlName="price">
+                @if (searchForm.get('price')?.hasError('pattern') &&
+                searchForm.get('price')?.touched) {
+                <label class="error">
+                    Price value must be integer between 0 to 99999999.
+                </label>
+                }
+            </div>
+            <div class="rowClass">
+                <label class="labelClass">Bed Count:</label>
+                <select id="bedCount" formControlName="bedCount">
+                    <option [ngValue]=""></option>
+                    @for (opMinBed of bedCounts; track opMinBed) {
+                    <option [ngValue]="opMinBed">
+                        {{ compassService.getBedCountByKey(opMinBed) }}
+                    </option>
+                    }
+                </select>
+            </div>
+            <div class="rowClass">
+                <label class="labelClass">Bath Count:</label>
+                <select id="bathCount" formControlName="bathCount">
+                    <option [ngValue]=""></option>
+                    @for (opMinBath of bathCounts; track opMinBath) {
+                    <option [ngValue]="opMinBath">
+                        {{ compassService.getBathCountByKey(opMinBath) }}
+                    </option>
+                    }
+                </select>
+            </div>
+            <div class="rowClass">
+                <label class="labelClass" for="squareFeet">Square Feet:</label>
+                <input id="squareFeet" type="text" formControlName="squareFeet">
+                @if (searchForm.get('squareFeet')?.hasError('required')
+                && searchForm.get('squareFeet')?.touched) {
+                <label class="error">
+                    Square Feet is required.
+                </label>
+                }
+            </div>
+            <div class="rowClass">
+                <label class="labelClass" for="preferCity">City:</label>
+                <ng-select id="city" [items]="compassService.cities" #selectedItem class="my-custom-select"
+                    bindLabel="cityId" bindLabel="name" [searchable]="true" (change)="selected($event)"
+                    formControlName="city">
+                </ng-select>
+            </div>
+            <div class="buttonRow">
+                <button class="buttonLeft" (click)="cancel()">Cancel</button>
+                <button class="buttonRight" (click)="search()">Search</button>
+            </div>
+        </form>
+    </div>
+</div>

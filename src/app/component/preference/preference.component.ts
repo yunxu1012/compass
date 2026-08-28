@@ -1,0 +1,250 @@
+import { Component, EventEmitter , signal} from '@angular/core';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { FormGroup, FormsModule, AbstractControl, ValidationErrors, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Observable } from 'rxjs';
+
+import { BedCount } from '../../enum/bed-count';
+import { BathCount } from '../../enum/bath-count';
+import { Router } from '@angular/router';
+import { CustomerPreference } from '../../model/customer-preference.model';
+import { City } from '../../model/city.model';
+import { CompassService } from '../../service/compass.service';
+
+@Component({
+  selector: 'app-preference',
+  templateUrl: './preference.component.html',
+  styleUrl: './preference.component.css',
+  standalone: false
+})
+export class PreferenceComponent {
+  isEditMode: boolean = false;
+  preferenceForm!: FormGroup;
+  customerPreference?: CustomerPreference;
+  hometypes = ["House", "Multi Family", "Townhouse", "Condo", "Mobile", "Co-op", "Land", "Other"];
+  bedCounts = Object.keys(BedCount);
+  bathCounts = Object.keys(BathCount);
+  hasPreference: boolean = false;
+  selectedCityNames: string[] = [];
+  cityError: boolean = false;
+  readonly cityErrMsg = signal<string>('');
+  customerName?:string;
+
+  constructor(private http: HttpClient, private router: Router, public compassService: CompassService) {
+
+  }
+
+  ngOnInit(): void {
+
+    this.preferenceForm = new FormGroup({
+      selectedHometypes: new FormControl('', Validators.required),
+      minPrice: new FormControl('', [Validators.required, Validators.pattern('^[0-9]{0,8}$')]),
+      maxPrice: new FormControl('', [Validators.required, Validators.pattern('^[0-9]{0,8}$')]),
+      minSquareFeet: new FormControl('', [Validators.required, Validators.pattern('^[0-9]{0,8}$')]),
+      maxSquareFeet: new FormControl('', [Validators.required, Validators.pattern('^[0-9]{0,8}$')]),
+      minBed: new FormControl('', Validators.required),
+      maxBed: new FormControl('', Validators.required),
+      minBath: new FormControl('', Validators.required),
+      selectedCities: new FormControl(''),
+    },  { validators: [this.validatePrice, this.validateBed, this.validateSquare]});
+    //this.preferenceForm.disable();
+    this.loadCustomerPreference();
+    this.compassService.loadCities();
+  }
+
+
+
+  private validatePrice(control: AbstractControl): ValidationErrors | null {
+    let minPrice = control.get('minPrice');
+    let maxPrice = control.get('maxPrice');
+    if (minPrice?.value != undefined && maxPrice?.value != undefined) {
+      if(isNaN(minPrice.value)||isNaN(maxPrice.value)){
+        return null;
+      }
+      let min: number = +minPrice.value;
+      let max: number = +maxPrice.value;
+      return min <= max ? null : { 'priceError': true };
+    }
+    return null;
+  }
+  private validateBed(control: AbstractControl): ValidationErrors | null {
+    const minBed = control.get('minBed')?.value;
+    const maxBed = control.get('maxBed')?.value;
+    let minValue = "";
+    let maxValue = "";
+    for (const [key, value] of Object.entries(BedCount)) {
+      if (key === minBed) {
+        minValue = value;
+      }
+      if (key === maxBed) {
+        maxValue = value;
+      }
+    }
+    if (minValue != "" && maxValue != "") {
+      const min = Number(minValue.substring(0, 1));
+      const max = Number(maxValue.substring(0, 1));
+      return min <= max ? null : { 'bedError': true };
+    }
+    return null;
+  }
+
+  private validateSquare(control: AbstractControl): ValidationErrors | null {
+    let minSquareFeet = control.get('minSquareFeet');
+    let maxSquareFeet = control.get('maxSquareFeet');
+    if (minSquareFeet?.value != undefined && maxSquareFeet?.value != undefined) {
+      if(isNaN(minSquareFeet.value)||isNaN(maxSquareFeet.value)){
+        return null;
+      }
+      let min: number = +minSquareFeet.value;
+      let max: number = +maxSquareFeet.value;
+      return min <= max ? null : { 'squareFeetError': true };
+    }
+    return null;
+  }
+
+  profileUrl = this.compassService.basicUrl+'customersPreferences/';
+  loadCustomerPreference() {
+    var email = localStorage.getItem('email');
+    var name  = localStorage.getItem('name');
+    if(name){
+      this.customerName = name;
+    }
+    var url = this.profileUrl + email;
+    this.getPreference(url).subscribe({
+      next: (data) => {
+        this.customerPreference = data;
+        this.hasPreference = true;
+        this.displayCustomerCity();
+      },
+      error: (e) => {
+        var msg = e.error.message;
+        if(msg==="JWT token expired"){
+         this.compassService.customerLoginAgain();
+         this.router.navigate(['/login']);
+        }
+        console.error(e);
+      }
+    });
+  }
+
+  getPreference(url: string): Observable<CustomerPreference> {
+    const httpOptions = {
+      headers: this.compassService.getCustomerHttpHeaders()
+    };
+    return this.http.get<CustomerPreference>(url, httpOptions);
+  }
+
+
+  public selected(value: any): void {
+    this.selectedCityNames = [];
+    for (const city of value) {
+      this.selectedCityNames.push(city.name);
+    }
+    if(this.selectedCityNames.length>10){
+       this.cityError = true;
+       this.cityErrMsg.set("Selected more than 10 cities.");
+    }else{
+      this.cityError = false;
+       this.cityErrMsg.set("");
+    }
+  }
+
+
+  toggleEditMode(): void {
+    this.isEditMode = !this.isEditMode;
+    if (this.isEditMode) {
+      this.preferenceForm.controls['selectedHometypes'].setValue(this.customerPreference?.hometypes);
+      this.preferenceForm.controls['minBed'].setValue(this.customerPreference?.minBed);
+      this.preferenceForm.controls['maxBed'].setValue(this.customerPreference?.maxBed);
+      this.preferenceForm.controls['minBath'].setValue(this.customerPreference?.minBath);
+      this.preferenceForm.controls['minPrice'].setValue(this.customerPreference?.minPrice);
+      this.preferenceForm.controls['maxPrice'].setValue(this.customerPreference?.maxPrice);
+      this.preferenceForm.controls['minSquareFeet'].setValue(this.customerPreference?.minSquareFeet);
+      this.preferenceForm.controls['maxSquareFeet'].setValue(this.customerPreference?.maxSquareFeet);
+      this.preferenceForm.controls['selectedCities'].setValue(this.customerPreference?.cities);
+      this.displayCustomerCity();
+    } else {
+      //this.preferenceForm.disable(); // Disable controls in view mode
+    }
+  }
+
+  displayCustomerCity(){
+    if (this.customerPreference?.cities) {
+      this.selectedCityNames = [];
+      for (const city of this.customerPreference?.cities) {
+        if (city.name) {
+          this.selectedCityNames.push(city.name);
+        }
+      }
+    }
+  }
+
+  cancelEdit(): void {
+    this.toggleEditMode(); // Exit edit mode
+  }
+  savePreference() {
+    if (this.preferenceForm.invalid) {
+      this.preferenceForm.markAllAsTouched(); // Mark all controls as touched
+      return; // Prevent submission if form is invalid
+    }
+    if(this.cityError){
+      return;
+    }
+    var email = localStorage.getItem('email');
+    var url = this.compassService.basicUrl+"customersPreferences/" + email;
+    const data = {
+      minBed: this.preferenceForm.get('minBed')?.value,
+      maxBed: this.preferenceForm.get('maxBed')?.value,
+      minBath: this.preferenceForm.get('minBath')?.value,
+      minPrice: this.preferenceForm.get('minPrice')?.value,
+      maxPrice: this.preferenceForm.get('maxPrice')?.value,
+      minSquareFeet: this.preferenceForm.get('minSquareFeet')?.value,
+      maxSquareFeet: this.preferenceForm.get('maxSquareFeet')?.value,
+      cities: this.preferenceForm.get('selectedCities')?.value,
+      hometypes:this.preferenceForm.get('selectedHometypes')?.value,
+    };
+    if (!this.hasPreference) {
+      this.createPreference(url, data).subscribe({
+        next: (data) => {
+          this.toggleEditMode();
+          this.customerPreference = data;
+          this.hasPreference = true;
+        },
+        error: (e) => {
+          var msg = e.error.message;
+          if(msg==="JWT token expired"){
+           this.compassService.customerLoginAgain();
+           this.router.navigate(['/login']);
+          }
+        console.error(e);
+        }
+      });
+    } else {
+      this.updatePreference(url, data).subscribe({
+        next: (data) => {
+          this.toggleEditMode();
+          this.customerPreference = data;
+        },
+        error: (e) => {
+          console.error(e);
+          var msg = e.error.message;
+          if(msg==="JWT token expired"){
+           this.compassService.customerLoginAgain();
+           this.router.navigate(['/login']);
+          }
+        }
+      });
+    }
+  }
+  createPreference(url: string, data: any): Observable<CustomerPreference> { 
+    const httpOptions = {
+      headers: this.compassService.getCustomerHttpHeaders()
+    };
+    return this.http.post<CustomerPreference>(url, data, httpOptions);
+  }
+  updatePreference(url: string, data: any): Observable<CustomerPreference> {
+    const httpOptions = {
+      headers: this.compassService.getCustomerHttpHeaders()
+    };
+    return this.http.put<CustomerPreference>(url, data, httpOptions);
+  }
+}

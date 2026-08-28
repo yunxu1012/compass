@@ -1,0 +1,243 @@
+<div class="box">
+  <div class="welcome">
+    Welcome <label class="blue">{{customerName}}</label>,&nbsp;  If you are not 
+    <label class="blue">{{customerName}}</label>&nbsp;, please 
+    <a routerLink="/login" (click)="compassService.logout()">Logout.</a>
+  </div>
+  <app-menu></app-menu>
+  <div class="profile-container">
+    <div>
+      <label class="titleRow">
+        <h2>User Preference</h2>
+      </label>
+    </div>
+    @if (!isEditMode) {
+    <div>
+      <div class="rowClass">
+        <label class="textLabel">Home Type:</label>
+        <label class="blue">{{customerPreference?.hometypes|json}} </label>
+      </div>
+      <div class="rowClass">
+        <label class="textLabel">Min Price:</label>
+        <label class="valueLabel">{{ customerPreference?.minPrice }} </label>
+        <label class="textLabel">Max Price:</label>
+        <label class="valueLabel">{{ customerPreference?.maxPrice }}</label>
+      </div>
+      <div class="rowClass">
+        <label class="textLabel">Min Bed:</label>
+        <label class="valueLabel">{{ compassService.getBedCountByKey(customerPreference?.minBed) }} </label>
+        <label class="textLabel">Max Bed:</label>
+        <label class="valueLabel">{{ compassService.getBedCountByKey(customerPreference?.maxBed) }}</label>
+      </div>
+      <div class="rowClass">
+        <label class="textLabel">Min Bath:</label>
+        <label class="valueLabel">{{ compassService.getBathCountByKey(customerPreference?.minBath) }}</label>
+      </div>
+      <div class="rowClass">
+        <label class="textLabel">Min Square Feet:</label>
+        <label class="valueLabel">{{ customerPreference?.minSquareFeet }}</label>
+        <label class="textLabel">Max Square Feet:</label>
+        <label class="valueLabel">{{ customerPreference?.maxSquareFeet }}</label>
+      </div>
+    </div>
+    <div class="rowClass">
+      <label class="textLabel">Preferred Cities are: </label>
+       <label class="blue"> {{selectedCityNames | json}} </label>
+    </div>
+    <div>
+      <div class="buttonRow">
+        <button class="buttonCenter" (click)="toggleEditMode()">Edit</button>
+      </div>
+    </div>
+    }
+
+    @if (isEditMode) {
+    <form [formGroup]="preferenceForm">
+      <div class="rowClass">
+        <label class="labelClass">Home Type:</label>
+        <ng-select id="homeType" [items]="hometypes" #selectedItem class="my-custom-select" [searchable]="true"
+         [multiple]="true" formControlName="selectedHometypes">
+          <ng-template ng-multi-label-tmp>
+            <span style="display:inline-block" class="ng-placeholder"></span>
+          </ng-template>
+        </ng-select>
+      </div>
+      <div class="rowClass">
+        <div>
+          @if (preferenceForm.get('selectedHometypes')?.hasError('required') &&
+          preferenceForm.get('selectedHometypes')?.touched) {
+          <label class="error">
+            Home Type is required.
+          </label>
+          }
+        </div>
+      </div>
+      <div class="rowClass">
+        <label class="labelClass" for="minPrice">Min Price:</label>
+        <input id="minPrice" type="text" formControlName="minPrice">
+        <label class="labelClass" for="maxPrice">Max Price:</label>
+        <input id="maxPrice" type="text" formControlName="maxPrice">
+      </div>
+      <div class="rowClass">
+        <div>
+          @if (preferenceForm.get('minPrice')?.hasError('required') &&
+          preferenceForm.get('minPrice')?.touched) {
+          <label class="error">
+            Min Price is required.
+          </label>
+          }
+          @if (preferenceForm.get('minPrice')?.hasError('pattern') &&
+          preferenceForm.get('minPrice')?.touched) {
+          <label class="error">
+            Min Price value must be integer between 0 to 99999999.
+          </label>
+          }
+          @if (preferenceForm.get('maxPrice')?.hasError('required') &&
+          preferenceForm.get('maxPrice')?.touched) {
+          <label class="error">
+            Max Price is required.
+          </label>
+          }
+          @if (preferenceForm.get('maxPrice')?.hasError('pattern') &&
+          preferenceForm.get('maxPrice')?.touched) {
+          <label class="error">
+            Max Price value must be integer between 0 to 99999999.
+          </label>
+          }
+          @if (preferenceForm.hasError('priceError')) {
+          <label class="error">
+            &nbsp;&nbsp; Min Price can't be greater than max price.
+          </label>
+          }
+        </div>
+      </div>
+      <div class="rowClass">
+        <label class="labelClass">Min Bed:</label>
+        <select id="minBed" formControlName="minBed">
+          <option [ngValue]=""></option>
+          @for (opMinBed of bedCounts; track opMinBed) {
+          <option [ngValue]="opMinBed">
+            {{ compassService.getBedCountByKey(opMinBed) }}
+          </option>
+          }
+        </select>
+        <label class="labelClass">Max Bed:</label>
+        <select id="maxBed" formControlName="maxBed">
+          <option [ngValue]=""></option>
+          @for (opMaxBed of bedCounts; track opMaxBed) {
+          <option [ngValue]="opMaxBed">
+            {{ compassService.getBedCountByKey(opMaxBed) }}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="rowClass">
+        <div>
+          @if (preferenceForm.get('minBed')?.hasError('required') &&
+          preferenceForm.get('minBed')?.touched) {
+          <label class="error">
+            Min Bed is required.
+          </label>
+          }
+          @if (preferenceForm.get('maxBed')?.hasError('required') &&
+          preferenceForm.get('maxBed')?.touched) {
+          <label class="error">
+            Max Bed is required.
+          </label>
+          }
+          @if (preferenceForm.hasError('bedError')) {
+          <label class="error">
+            &nbsp;&nbsp; Min Bed can't be greater than Max Bed.
+          </label>
+          }
+        </div>
+      </div>
+      <div class="rowClass">
+        <label class="labelClass">Min Bath:</label>
+        <select id="minBath" formControlName="minBath">
+          <option [ngValue]=""></option>
+          @for (opMinBath of bathCounts; track opMinBath) {
+          <option [ngValue]="opMinBath">
+            {{ compassService.getBathCountByKey(opMinBath) }}
+          </option>
+          }
+        </select>
+      </div>
+      <div class="rowClass">
+        <div>
+          @if (preferenceForm.get('minBath')?.hasError('required') &&
+          preferenceForm.get('minBath')?.touched) {
+          <label class="error">
+            Min Bath is required.
+          </label>
+          }
+        </div>
+      </div>
+      <div class="rowClass">
+        <label class="labelClass" for="minSquareFeet">Min Square Feet:</label>
+        <input id="minSquareFeet" type="text" formControlName="minSquareFeet">
+        <label class="labelClass" for="maxSquareFeet">Max Square Feet:</label>
+        <input id="maxSquareFeet" type="text" formControlName="maxSquareFeet">
+      </div>
+      <div class="rowClass">
+        @if (preferenceForm.get('minSquareFeet')?.hasError('required')
+        && preferenceForm.get('minSquareFeet')?.touched) {
+        <label class="error">
+          Min Square Feet is required.
+        </label>
+        }
+        @if (preferenceForm.get('minSquareFeet')?.hasError('pattern')
+        && preferenceForm.get('minSquareFeet')?.touched) {
+        <label class="error">
+          Min Square Feet value must be integer between 0 to 99999999.
+        </label>
+        }
+        @if (preferenceForm.get('maxSquareFeet')?.hasError('required')
+        && preferenceForm.get('maxSquareFeet')?.touched) {
+        <div class="error">
+          Max Square Feet is required.
+        </div>
+        }
+        @if (preferenceForm.get('maxSquareFeet')?.hasError('pattern')
+        && preferenceForm.get('maxSquareFeet')?.touched) {
+        <div class="error">
+          Max Square Feet value must be integer between 0 to 99999999.
+        </div>
+        }
+        @if (preferenceForm.hasError('squareFeetError')) {
+        <label class="error">
+          &nbsp;&nbsp; Min Squrare Feet can't be greater than Max Square Feet.
+        </label>
+        }
+      </div>
+      <div>
+      </div>
+      <p>
+        Preferred Cities are: {{selectedCityNames | json}}
+      </p>
+      <div>
+        <p>
+          Please select up to 10 preferred cities
+        </p>
+
+        <ng-select [items]="compassService.cities" #selectedItem class="my-custom-select" bindLabel="name" [searchable]="true"
+          (change)="selected($event)" [multiple]="true" formControlName="selectedCities">
+          <ng-template ng-multi-label-tmp>
+            <span style="display:block" class="ng-placeholder"></span>
+          </ng-template>
+
+        </ng-select>
+
+      </div>
+      <p></p>
+      <div class="error">
+        {{cityErrMsg()}}
+    </div>
+
+      <div class="buttonRow">
+        <button class="buttonLeft" type="button" (click)="cancelEdit()">Cancel</button>
+        <button class="buttonRight" type="submit" (click)="savePreference()">Save</button>
+      </div>
+    </form>
+    }
+  </div>

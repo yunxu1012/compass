@@ -1,0 +1,152 @@
+<div class="box">
+    <div class="welcome">
+        Welcome <label class="blue">{{customerName}}</label>,&nbsp;  If you are not 
+        <label class="blue">{{customerName}}</label>&nbsp;, please 
+        <a routerLink="/login" (click)="compassService.logout()">Logout.</a>
+      </div>
+    <app-menu></app-menu>
+
+    <form [formGroup]="taskForm">
+        <div class="listBox">
+            <label class="nameTitle">Date</label>
+            <label class="nameTitle">Time</label>
+            <label class="nameTitle">Status</label>
+            <label class="detailTitle">Details</label>
+            <label class="nameTitle">Action</label>
+            @if(noTasks()){
+            <p>No appointments to display.</p>
+            }
+            @if(!noTasks()){
+            @for (task of tasks(); track task) {
+            <p>
+                <label class="nameText">{{task.taskDate}}</label>
+                <label class="nameText">{{task.startTime}}</label>
+                <label class="nameText">{{task.status}}</label>
+                <label class="detailText"> <a [routerLink]="['/customer-task-details', task.id]">Details</a>
+                </label>
+                @if(taskIsRejected(task)){
+                <button type="submit" (click)="removeTask(task.id)">Remove</button>
+                }
+                @if(!taskIsRejected(task)){
+                <button type="submit" (click)="cancelTask(task.id)">Cancel</button>
+                }
+            </p>
+
+            }
+            <div> <button type="submit" (click)="loadCustomerTasks()">Refresh Appointments</button></div>
+            }
+
+        </div>
+
+        <div class="rowClass">
+            <label class="title">Schedule A New Appointment:</label>
+        </div>
+        @if(fullTasks()){
+        <p class="phText">Customer can only schedule up to 3 tasks. Please cancel or
+            remove appointments before schedule new one. </p>
+        }
+        @if(!fullTasks()){
+        <div class="rowClass">
+            <label class="labelClass">Date:</label>
+            <select id="schedule" formControlName="selectedSchedule" (change)="changeSchedule()">
+                @for (schedule of schedules(); track schedule) {
+                <option [ngValue]="schedule">{{schedule.taskDate | date:'MM/dd/yyyy EEE'}}</option>
+                }
+            </select>
+            @if (taskForm.get('selectedSchedule')?.hasError('required')
+            && taskForm.get('selectedSchedule')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Task Date is required.
+            </label>
+            }
+        </div>
+        <div class="rowClass">
+            <label class="labelClass">Time:</label>
+            <select id="timeList" formControlName="taskTime">
+                @for (taskTime of timeList(); track taskTime) {
+                <option [ngValue]="taskTime">{{taskTime}}</option>
+                }
+            </select>
+            @if (taskForm.get('taskTime')?.hasError('required')
+            && taskForm.get('taskTime')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Task Time is required.
+            </label>
+            }
+        </div>
+        <div class="rowClass">
+            <label class="labelClass">Address:</label>
+            <input id="address" type="text" formControlName="address" length="40">
+        </div>
+        <div class="rowClass">
+            @if (taskForm.get('address')?.hasError('required')
+            && taskForm.get('address')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Address is required.
+            </label>
+            }
+            @if (taskForm.get('address')?.hasError('maxlength')
+            && taskForm.get('address')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Max length of address is 40 characters.
+            </label>
+            }
+        </div>
+        <div class="rowClass">
+            <label class="labelClass" for="city">City:</label>
+            <ng-select id="city" [items]="compassService.cities" #selectedItem class="my-custom-select"
+                bindLabel="cityId" bindLabel="name" [searchable]="true" formControlName="city">
+            </ng-select>
+            <p></p>
+            @if (taskForm.get('city')?.hasError('required')
+            && taskForm.get('city')?.touched) {
+            <label class="error">
+                City is required.
+            </label>
+            }
+        </div>
+        <div class="rowClass">
+            <label class="labelClass">State:</label>
+            <label class="labelTxt">Ma</label>
+        </div>
+        <div class="rowClass">
+            <label class="labelClass">Zip Code:</label>
+            <input id="zipcode" type="text" formControlName="zipcode">
+        </div>
+        <div class="rowClass">
+            @if (taskForm.get('zipcode')?.hasError('required')
+            && taskForm.get('zipcode')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Zipcode is required.
+            </label>
+            }
+            @if (taskForm.get('zipcode')?.hasError('pattern')
+            && taskForm.get('zipcode')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Zipcode must be exactly 5 digits long.
+            </label>
+            }
+        </div>
+
+        <div class="rowClass">
+            <label class="labelClass">Comment:</label>
+            <input id="comment" type="text" formControlName="comment">
+        </div>
+        <div class="rowClass">
+            @if (taskForm.get('comment')?.hasError('maxlength')
+            && taskForm.get('comment')?.touched) {
+            <label class="error">
+                &nbsp;&nbsp; Max length of comment is 40 characters.
+            </label>
+            }
+        </div>
+        <div class="error">
+            {{errorMsg()}}
+        </div>
+        <div class="buttonRow">
+            <button class="buttonCenter" (click)="saveTask()">Submit</button>
+        </div>
+        }
+
+    </form>
+</div>

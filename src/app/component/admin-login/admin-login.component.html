@@ -1,0 +1,58 @@
+<div class="box_no_border">
+  <a class="linkLabelLeft" routerLink="/home">Home</a>
+</div>
+<div class="box_no_border">
+  <a class="linkLabelLeft" routerLink="/register" (click)="compassService.clearTimeout()">Customer Register</a>
+  <a class="linkLabelRight" routerLink="/login" (click)="compassService.clearTimeout()">Customer Login</a>
+</div>
+<div class="box">
+  <h2>Admin Login</h2>
+  <div class="row">
+    <form [formGroup]="adminLoginForm" (ngSubmit)="onSubmit()">
+      <label class="textLabel" for="email">Email: </label>
+      <br />
+      <input id="email" type="text" formControlName="email" />
+      @if (adminLoginForm.get('email')?.hasError('required')
+      && adminLoginForm.get('email')?.touched) {
+      <label class="error">
+        &nbsp;&nbsp; Email is required.
+      </label>
+      }
+      @if (adminLoginForm.get('email')?.hasError('email')
+      && adminLoginForm.get('email')?.touched) {
+      <label class="error">
+        &nbsp;&nbsp; Email format not correct.
+      </label>
+      }
+      <br />
+      <label class="textLabel" for="password">Password: </label>
+      <br />
+      <input id="password" [type]="hidePassword ? 'password' : 'text'" formControlName="password" />
+        <button type="button" (click)="togglePasswordVisibility()">
+          {{ hidePassword ? 'Show' : 'Hide' }}
+        </button>
+      @if (adminLoginForm.get('password')?.hasError('required')
+      && adminLoginForm.get('password')?.touched) {
+      <label class="error">
+        &nbsp;&nbsp; Password is required.
+      </label>
+      }
+      <div class="error">
+        {{errorMsg()}}
+      </div>
+      <div class="error">
+        {{compassService.adminTimeOut()}}
+      </div>
+      <div>
+        <button class="button" type="submit">Submit</button>
+      </div>
+    </form>
+  </div>
+</div>
+<div class="box_no_border">
+This is a sample project for a real estate agent. You can log in using the demo admin account below:
+<br/>Email: admin@yunxucompany.com
+<br/>Password: password
+<br/>As an Admin, you can view customer information, search for customers based on their preferences, 
+and approve or reject appointment requests.
+</div>

@@ -1,0 +1,91 @@
+import {Component, signal} from '@angular/core';
+import {FormGroup, AbstractControl,ValidationErrors, FormControl, ReactiveFormsModule,  Validators} from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import {Router } from '@angular/router';
+import { JwtInfo } from '../../model/jwt-info.model';
+import { CompassService } from '../../service/compass.service';
+import { lastValueFrom } from 'rxjs';
+
+@Component({
+    selector: 'app-login',
+    templateUrl: './login.component.html',
+    styleUrl: './login.component.css',
+    standalone: false
+})
+export class LoginComponent {
+  email:string ='';
+  password:string = '';
+  readonly errorMsg = signal<string>('');
+  jwtInfo?:JwtInfo;
+  
+  loginForm = new FormGroup({
+    email: new FormControl('',  [Validators.required, Validators.email]),
+    password: new FormControl('',  Validators.required),
+  });
+
+  constructor(private http: HttpClient, private router: Router, public compassService: CompassService){
+    console.log('MyComponent initialized!');
+  }
+
+  onSubmit(){ 
+    this.compassService.clearTimeout();
+    if (this.loginForm.invalid) {
+      this.loginForm.markAllAsTouched(); // Mark all controls as touched
+      return; // Prevent submission if form is invalid
+    }
+    let email= this.loginForm.controls.email.value;
+    if(email!=null){
+      this.email = email;
+    }
+    let password = this.loginForm.controls.password.value;
+    if(password!=null){
+      this.password = password;
+    }
+    this.login();
+  }
+  authUrl =  this.compassService.basicUrl+'auth/customer/login';
+
+  login(): void {
+    const data = {
+      email: this.email,
+      password: this.password,
+    };
+
+    this.createToken(this.authUrl,data).subscribe({
+      next: (res) => {
+        localStorage.setItem('email',this.email);
+        this.jwtInfo = res;
+        if(this.jwtInfo?.token){
+            localStorage.setItem('token',this.jwtInfo?.token);
+        }
+        if(this.jwtInfo?.name){
+          localStorage.setItem('name',this.jwtInfo?.name);
+      }
+        this.router.navigate(['/profile']);
+      },
+      error: (e) => {
+      console.error(e);
+      this.errorMsg.set(e.error); 
+      }
+    });
+  }
+
+  createToken(baseUrl: string, data: any): Observable<any> {
+    const headers = new HttpHeaders({ 'Content-Type': 'application/json' });
+    return this.http.post(baseUrl, data, {
+      headers: headers
+    });
+  }
+
+  hidePassword = true; // Initially hide the password
+
+  togglePasswordVisibility() {
+    this.hidePassword = !this.hidePassword;
+  }
+
+  forgotPassowrd(){
+    this.router.navigate(['/forgot-password-email']);
+  }
+  
+}
