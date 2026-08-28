@@ -14,7 +14,7 @@ import { signal } from '@angular/core';
 export class CompassService {
   //basicUrl: string = "http://100.31.117.71:8080/api/"
   //basicUrl: string = "http://localhost:8080/api/"
-  basicUrl: string = "http://32.198.61.4:8080/api/"
+  basicUrl: string = "http://git-load-balance-0826-01-562466155.us-east-1.elb.amazonaws.com/api/"
   cities: City[] = [];
   registerCustomer: Customer;
   customers: Customer[] = [];
