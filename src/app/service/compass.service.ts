@@ -12,7 +12,8 @@ import { signal } from '@angular/core';
   providedIn: 'root'
 })
 export class CompassService {
-  basicUrl: string = "http://git-service-load-balance-1958582916.us-east-1.elb.amazonaws.com/api/"
+  basicUrl: string = "http://100.27.11.166:8080/api/" 
+// basicUrl: string = "http://git-service-load-balance-1958582916.us-east-1.elb.amazonaws.com/api/"
   cities: City[] = [];
   registerCustomer: Customer;
   customers: Customer[] = [];
